@@ -1,0 +1,125 @@
+package aadlbook::flows_definition
+public
+
+
+
+thread sender_thr
+features
+	valueout : out data port mydata;
+flows
+    f0 : flow source valueout;
+properties
+	Dispatch_Protocol => periodic;
+	period => 20 ms;
+end sender_thr;
+
+process sender_pr
+features
+	valueout : out data port mydata;
+flows
+    f0 : flow source valueout;
+end sender_pr;
+
+process implementation sender_pr.i
+subcomponents
+   thr : thread sender_thr;
+connections
+   c0 : port thr.valueout -> valueout;
+flows
+   f0 : flow source thr.f0 -> c0 -> valueout;
+end sender_pr.i;
+
+
+thread processing_thr
+features
+	valuein  : in data port mydata;
+	valueout : out data port mydata;
+flows
+	f0 : flow path valuein -> valueout;
+properties
+	Dispatch_Protocol => periodic;
+	period => 20 ms;
+end processing_thr;
+
+process processing_pr
+features
+	valuein  : in data port mydata;
+	valueout : out data port mydata;
+flows
+	f0 : flow path valuein -> valueout;
+end processing_pr;
+
+process implementation processing_pr.i
+subcomponents
+   thr : thread processing_thr;
+connections
+   c0 : port thr.valueout -> valueout;
+   c1 : port valuein -> thr.valuein;
+flows
+	f0 : flow path valuein -> c1 -> thr.f0 -> c0 -> valueout;
+end processing_pr.i;
+
+
+thread receiver_thr
+features
+	valuein : in data port mydata;
+flows
+	f0 : flow sink valuein;
+properties
+	dispatch_protocol => periodic;
+	period => 10 ms;
+end receiver_thr;
+
+process receiver_pr
+features
+	valuein : in data port mydata;
+flows
+	f0 : flow sink valuein;
+end receiver_pr;
+
+process implementation receiver_pr.i
+subcomponents
+   thr : thread receiver_thr;
+connections
+	c0 : port valuein -> thr.valuein;
+flows
+	f0 : flow sink valuein -> c0 -> thr.f0;
+end receiver_pr.i;
+
+bus ethernet
+end ethernet;
+
+data mydata
+properties
+	Data_Size => 1 bytes;
+end mydata;
+
+processor corei7
+features
+	eth : requires bus access ethernet;
+end corei7;
+
+system integration
+end integration;
+
+system implementation integration.i
+subcomponents
+   cpu0       : processor corei7;
+   cpu1       : processor corei7;
+   sender     : process sender_pr.i;
+   processing : process processing_pr.i;
+   receiver   : process receiver_pr.i;
+   eth        : bus ethernet;
+connections
+   eth0     : bus access eth <-> cpu0.eth;
+   eth1     : bus access eth <-> cpu1.eth;
+   sender_to_processing   : port sender.valueout -> processing.valuein;
+   processing_to_receiver : port processing.valueout -> receiver.valuein;
+flows
+   etef0 : end to end flow sender.f0 -> sender_to_processing -> 
+                           processing.f0 -> processing_to_receiver -> receiver.f0;
+properties
+	Actual_Connection_Binding => (reference (eth)) applies to sender_to_processing,processing_to_receiver;
+end integration.i;
+
+end aadlbook::flows_definition;

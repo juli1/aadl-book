@@ -1,0 +1,83 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::software::image_acquisition
+
+public
+
+with aadlbook::icd; 
+with sei;
+
+-------------------------
+--  Image Acquisition  --
+-------------------------
+
+process image_acquisition
+features
+	picture           : in data port aadlbook::icd::picture;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position.i;
+flows
+	f0 : flow path picture -> obstacle_detected;
+annex EMV2 {**
+	use types 		ErrorLibrary;
+	use behavior  	ErrorLibrary::FailStop;
+
+	error propagations
+		picture : in propagation {ItemOmission};
+		obstacle_detected : out propagation {ItemOmission,OutOfRange};
+		processor : in propagation {ServiceError};
+	flows
+		ef0 : error path picture{ItemOmission} -> obstacle_detected{ItemOmission};
+		ef1 : error path picture{ItemOmission} -> obstacle_detected{OutOfRange};
+		ef2 : error path processor{ServiceError} -> obstacle_detected{ItemOmission};
+	end propagations;
+
+	component error behavior
+	transitions
+		t0 : Operational -[processor{ServiceError}]-> FailStop;
+		t1 : FailStop -[processor{NoError}]-> Operational;
+	propagations
+	   	p1 : FailStop -[]-> obstacle_detected{ItemOmission};
+	end component;
+**};
+end image_acquisition;
+
+process implementation image_acquisition.i
+subcomponents
+	thr_acq : thread image_acquisition_thr.i;
+connections
+	c0 : port picture -> thr_acq.picture;
+	c1 : port thr_acq.obstacle_detected -> obstacle_detected;
+flows
+	f0 : flow path picture -> c0 -> thr_acq.f0 -> c1 -> obstacle_detected;
+end image_acquisition.i;
+
+thread image_acquisition_thr
+features
+	picture           : in data port aadlbook::icd::picture;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position.i;
+flows
+	f0 : flow path picture -> obstacle_detected;
+properties
+	sei::mipsbudget   => 25.0 MIPS;
+	Dispatch_Protocol => Periodic;
+	Period            => 50ms;
+	compute_execution_time => 10 ms .. 40 ms;
+--	reference_processor => classifier (::platform::ecu);
+	sei::instructionsperdispatch => 1.24 kipd .. 1.25 mipd; 
+end image_acquisition_thr;
+
+thread implementation image_acquisition_thr.i
+end image_acquisition_thr.i;
+
+end aadlbook::software::image_acquisition;

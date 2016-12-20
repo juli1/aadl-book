@@ -1,0 +1,73 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::icd
+
+public
+
+with base_types;
+with data_model;
+
+data obstacle_position
+end obstacle_position;
+
+data implementation obstacle_position.i
+subcomponents
+  present : data base_types::boolean;
+  x       : data Base_Types::Unsigned_8;
+end obstacle_position.i;
+
+data speed extends base_types::unsigned_16
+end speed;
+
+data picture 
+properties
+	data_size => 600 KByte;
+	data_model::data_representation => array;
+end picture; 
+
+data boolean
+properties
+	data_size => 1 bits;
+end boolean;
+
+
+data pressure extends Base_Types::Integer_8
+end pressure;
+
+data entertainment_infos extends Base_Types::Integer_8
+end entertainment_infos;
+
+
+data speed_cmd extends Base_Types::Integer_8
+end speed_cmd;
+
+data brake_cmd extends Base_Types::Integer_8
+end brake_cmd;
+
+data distance extends base_types::unsigned_32
+end distance;
+
+data music
+end music;
+
+data implementation music.i
+end music.i;
+
+data contacts
+end contacts;
+
+data implementation contacts.i
+end contacts.i;
+
+end aadlbook::icd;

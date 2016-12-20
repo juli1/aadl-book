@@ -1,0 +1,49 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::analysis::latency
+public
+	virtual bus myprotocol
+	properties
+		latency => 1 ms .. 2 ms;
+	end myprotocol;
+	
+	data integer32
+	properties
+		data_size => 4 bytes;
+	end integer32;
+	
+	bus deterministic_bus
+	properties
+		transmission_time =>
+		[
+			fixed   => 2 ms .. 4 ms;
+			perbyte => 10 us .. 20 us;
+		];
+	end deterministic_bus;
+
+    thread task
+    properties
+       dispatch_protocol      => periodic;
+       period                 => 10 ms;
+       deadline               => 5 ms;
+       Compute_Execution_Time => 1 ms .. 2 ms;
+    end task;
+    
+    processor anycpu
+    properties
+    	scheduling_protocol => (rms);
+    end anycpu;
+
+
+end aadlbook::analysis::latency;

@@ -1,0 +1,107 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::platform
+
+public
+
+with SEI;
+with emv2;
+with arp4761;
+
+processor ecu
+features
+	socket1 : requires bus access can;
+	socket2 : requires bus access can; 
+properties
+	SEI::MIPSCapacity => 50.0 MIPS; 
+annex EMV2 {**
+	use types 		ErrorLibrary;
+	use behavior  	ErrorLibrary::FailStop;
+
+	error propagations
+		bindings : out propagation {ServiceError};
+	flows
+		fsoft : error source bindings{ServiceError};
+		fhard : error source bindings{ServiceError};
+	end propagations;
+
+	component error behavior
+	events
+		SoftwareError : error event;
+		HardwareError : error event;
+		Reset         : recover event;
+	transitions
+		Operational -[SoftwareError]-> FailStop; 
+		Operational -[HardwareError]-> FailStop;
+		FailStop      -[Reset]->         Operational;
+	propagations
+		normal       : Operational -[]-> bindings {NoError};
+		fs           : FailStop -[]-> bindings{ServiceError};  
+	end component;
+	properties
+		emv2::severity => ARP4761::Major applies to SoftwareError;
+		emv2::likelihood => ARP4761::Probable applies to SoftwareError;
+		emv2::hazards => 
+			([	crossreference => "N/A";
+				failure => "SoftwareFault";
+				phases => ("all");
+				description => "Software failure from the platform (OS exception, etc.)";
+				comment => "Impact all components that are controlled by this software";
+			])
+			applies to SoftwareError;
+		EMV2::OccurrenceDistribution => [ ProbabilityValue => 1.35e-5 ; Distribution => Poisson;] applies to SoftwareError;
+
+
+		emv2::severity => ARP4761::Major applies to HardwareError;
+		emv2::likelihood => ARP4761::Probable applies to HardwareError;
+		emv2::hazards => 
+			([	crossreference => "N/A";
+				failure => "HardwareFault";
+				phases => ("all");
+				description => "Hardware failure from the platform (OS exception, etc.)";
+				comment => "Impact all components that are controlled by this processor";
+			])
+			applies to HardwareError;
+		EMV2::OccurrenceDistribution => [ ProbabilityValue => 1.35e-5 ; Distribution => Poisson;] applies to HardwareError;
+**};	
+end ecu;
+
+
+--
+-- About CAN and bus bandwidth
+-- Check http://www.canopen.us/faq/0143.htm
+-- and http://www.esacademy.com/en/library/calculators/can-best-and-worst-case-calculator.html
+-- for having an evaluator for the bus bandwidth estimation.
+--
+
+bus can
+properties
+	Latency => 1 Ms .. 1 Ms;
+	SEI::BandWidthCapacity => 500000.0 bitsps; 
+	Transmission_Time => [ Fixed => 10 ms .. 30ms;
+                          PerByte => 1 us .. 10 us; ];
+end can;
+
+bus rs232
+properties
+	Latency => 1 Ms .. 1 Ms;
+	SEI::BandWidthCapacity => 5.0 KBytesps; 
+	Transmission_Time => [ Fixed => 200 ms .. 500ms;
+                          PerByte => 2 ms .. 5 ms; ];
+end rs232;
+
+bus bluetooth
+end bluetooth;
+
+end aadlbook::platform;

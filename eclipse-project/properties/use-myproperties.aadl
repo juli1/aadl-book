@@ -1,0 +1,53 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package use_myproperties
+public
+	with myproperties;
+	
+	
+	device sensor
+	end sensor;
+	
+
+	device motor
+	properties
+		myproperties::reviews =>
+		(
+			[author => "Bob";
+			 importance => minor;
+			 content => "This component needs feature!";
+			],
+			[author => "Jack";
+			 importance => major;
+			 content => "Needs to describe the behavior";
+			]
+		);
+	    myproperties::weight => 1.0 pound;
+	end motor;
+	
+	
+	system integration
+	properties
+		myproperties::description => "this is my system";
+	end integration;
+	
+	system implementation integration.i
+	subcomponents
+		m : device motor;
+		s : device sensor;
+	properties
+		myproperties::weight => 100.0 g applies to s;
+	end integration.i;
+	
+end use_myproperties;

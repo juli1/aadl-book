@@ -1,0 +1,14 @@
+package aadlbook::features_definition
+public
+
+system mysystem
+features
+	input_data : in data port;
+	output_event : out event port;
+	input_dataevent : in event data port;
+	
+	eth  : requires bus access;
+	cpu  : requires data access;
+end mysystem;
+
+end aadlbook::features_definition;

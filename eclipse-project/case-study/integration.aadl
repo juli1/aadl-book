@@ -1,0 +1,211 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::integration
+
+public
+
+with security_properties;
+
+
+with aadlbook::devices;
+with aadlbook::software::image_acquisition;
+with aadlbook::software::obstacle_detection;
+with aadlbook::software::panel_control;
+with aadlbook::software::speed_controller;
+with aadlbook::software::speed_voter;
+with aadlbook::software::entertainment;
+with aadlbook::platform;
+
+system integration
+features
+	bluetooth : requires bus access aadlbook::platform::bluetooth;
+end integration;
+
+--
+--  This is the functional system. This system is designed to be independent
+--  of the underlying deployment platform. It contains all components
+--  without associating connections or processes to processors.
+--
+--  The association to an execution platform is done later, in the
+--  system implementation integration.variation1 and integration.variation2
+--
+
+system implementation integration.functional
+subcomponents
+-- input devices
+	obstacle_camera    : device aadlbook::devices::camera;
+	obstacle_radar     : device aadlbook::devices::radar;
+	wheel_sensor       : device aadlbook::devices::speed_wheel_sensor;
+	laser_sensor       : device aadlbook::devices::speed_laser_sensor;
+	panel              : device aadlbook::devices::panel;
+	tire_pressure      : device aadlbook::devices::tpms;
+	bluetooth_ctrl     : device aadlbook::devices::bluetooth_controller;
+
+-- software and processing elements.
+    image_acquisition  : process aadlbook::software::image_acquisition::image_acquisition.i;
+    obstacle_detection : process aadlbook::software::obstacle_detection::obstacle_detection.i;
+    panel_controller   : process aadlbook::software::panel_control::panel_control.i;
+    speed_voter        : process aadlbook::software::speed_voter::speed_voter.i;
+    speed_ctrl         : process aadlbook::software::speed_controller::speed_controller.i;
+    entertainment      : process aadlbook::software::entertainment::entertainment.i;
+    
+-- output devices
+	brake         : device aadlbook::devices::brake;
+	acceleration  : device aadlbook::devices::acceleration;
+	screen        : device aadlbook::devices::screen;
+	speaker       : device aadlbook::devices::speaker;
+connections
+    c00 : port obstacle_camera.picture               -> image_acquisition.picture;
+    c01 : port image_acquisition.obstacle_detected   -> obstacle_detection.camera; 
+    c02 : port obstacle_radar.distance_estimate      -> obstacle_detection.radar;
+    c03 : port obstacle_detection.obstacle_position  -> speed_ctrl.obstacle_position;
+    c04 : port wheel_sensor.speed                    -> speed_voter.wheel_sensor;
+    c05 : port laser_sensor.speed                    -> speed_voter.laser_sensor;
+    c06 : port speed_voter.speed                     -> speed_ctrl.current_speed;
+    c07 : port speed_voter.speed                     -> screen.actual_speed;
+    c08 : port speed_ctrl.speed_cmd                  -> acceleration.cmd;
+    c09 : port speed_ctrl.brake_cmd                  -> brake.cmd;
+    c10 : port speed_ctrl.warning                    -> screen.warning;
+    c11 : port panel.increase_speed                  -> panel_controller.increase_speed;
+    c12 : port panel.decrease_speed                  -> panel_controller.decrease_speed;
+    c13 : port panel_controller.desired_speed        -> speed_ctrl.desired_speed;
+    c14 : port speed_voter.speed                     -> panel_controller.current_speed;
+    c15 : port panel_controller.desired_speed        -> screen.desired_speed;
+	c16 : port bluetooth_ctrl.contacts               -> entertainment.contacts;
+	c17 : port bluetooth_ctrl.music                  -> entertainment.music_in;
+	c18 : port entertainment.music_out               -> speaker.music;
+	c19 : port entertainment.infos                   -> screen.entertainment_infos;
+	c20 : port panel_controller.tire_pressure_out    -> screen.tire_pressure;
+	c21 : port tire_pressure.pressure                -> panel_controller.tire_pressure_in;
+	c22 : bus access bluetooth                       <-> bluetooth_ctrl.bt;
+flows
+    --
+    --  We assume the camera will take more time because of acquisition/processing time.
+    --
+    panel_to_warning : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
+    				c13 -> speed_ctrl.f02 -> c08 -> acceleration.f0
+    	{latency => 50 ms .. 100 ms;};
+    	
+     panel_to_accel : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
+    				c13 -> speed_ctrl.f22 -> c10 -> screen.f0
+    	{latency => 50 ms .. 100 ms;};	
+    
+     camera_to_screen : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0
+     
+      -> c03 -> speed_ctrl.f20 -> c10 -> screen.f0
+    	{latency => 50 ms .. 100 ms;};
+    camera_to_accel : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0
+    	{latency => 50 ms .. 100 ms;};
+    camera_to_brake : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0
+        {latency => 50 ms .. 100 ms;};
+        
+    --
+    --  The radar is faster to process and produce information to the system.
+    --
+    radar_to_accel  : end to end flow obstacle_radar.f0  -> c02 -> obstacle_detection.f1 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0
+    	{latency => 20 ms .. 60 ms;};
+    radar_to_brake  : end to end flow obstacle_radar.f0  -> c02 -> obstacle_detection.f1 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0
+    	{latency => 20 ms .. 60 ms;};
+    
+    
+    --
+    --  Laser and wheel provide the car speed. So, it should be quick to operate and produce data.
+    --
+    laser_to_accel  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
+        {latency => 10 ms .. 40 ms;};
+    laser_to_brake  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
+        {latency => 10 ms .. 40 ms;};
+    
+    wheel_sensor_to_accel  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
+        {latency => 10 ms .. 40 ms;};
+    wheel_sensor_to_brake  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
+        {latency => 10 ms .. 40 ms;};
+properties
+	security_properties::exposure => 100 applies to bluetooth_ctrl, tire_pressure;
+	security_properties::exposure => 0 applies to speaker, screen, acceleration, brake, obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor;
+	security_properties::domains => ("entertainment") applies to entertainment, speaker, screen;
+	security_properties::domains => ("control_notcritical") applies to tire_pressure, panel, panel_controller;
+	security_properties::domains => ("control_critical") applies to obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor, speed_ctrl, speed_voter,brake, acceleration;
+annex EMV2 {**
+	use types 		ErrorLibrary;
+	use behavior  	ErrorLibrary::FailStop;
+
+	composite error behavior
+	states
+		[brake.FailStop and acceleration.FailStop]-> FailStop;
+	end composite;
+**};						 	
+end integration.functional;
+
+
+--
+--  For variation1, we are using
+--    * one processor for the critical/driving part
+--    * one processor for the entertainment part
+--    * one bus for the connections of the entertainment part
+--    * one bus for the connections of the driving part
+--    * one bus for each cross-domain connections
+--
+
+system implementation integration.variation1 extends integration.functional
+subcomponents
+	cpu1 : processor aadlbook::platform::ecu;
+	cpu2 : processor aadlbook::platform::ecu;
+	can1 : bus aadlbook::platform::can;
+	can2 : bus aadlbook::platform::can;
+	can3 : bus aadlbook::platform::can;
+connections
+	b00 : bus access can1 <-> cpu1.socket1;
+	b01 : bus access can2 <-> cpu2.socket1;
+	b02 : bus access can3 <-> cpu1.socket2;
+	b03 : bus access can3 <-> cpu2.socket2; 
+properties
+	actual_processor_binding => (reference (cpu1)) applies to 
+			image_acquisition, obstacle_detection, speed_voter, speed_ctrl;
+	actual_processor_binding => (reference (cpu2)) applies to 
+			panel_controller, entertainment;
+	actual_connection_binding => (reference (can1)) applies to
+		c00,c02,c04,c05,c08,c09;
+	actual_connection_binding => (reference (can2)) applies to
+        c15,c18,c19,c20,c21;
+	actual_connection_binding => (reference (can3)) applies to
+        c10,c14,c07,c13;
+end integration.variation1;
+
+
+--
+--  For variation2, we are using
+--    * one processor for all software
+--    * two buses to connect the devices to the processor
+--      one for the input, one for the output
+--
+
+system implementation integration.variation2 extends integration.functional
+subcomponents
+	cpu : processor aadlbook::platform::ecu;
+	can1 : bus aadlbook::platform::can;
+	can2 : bus aadlbook::platform::can;
+connections
+	b00 : bus access can1 <-> cpu.socket1;
+	b01 : bus access can2 <-> cpu.socket2;
+properties
+	actual_processor_binding => (reference (cpu)) applies to
+			image_acquisition, obstacle_detection, speed_voter, speed_ctrl, panel_controller, entertainment;
+	actual_connection_binding => (reference (can1)) applies to
+			c00, c02, c04, c17,c16,c21,c11,c12;
+	actual_connection_binding => (reference (can2)) applies to
+			c07,c15,c20,c19,c18,c10,c08,c09;
+end integration.variation2;
+
+end aadlbook::integration;

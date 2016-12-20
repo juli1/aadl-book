@@ -1,0 +1,64 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+package aadlbook::software::entertainment
+
+public
+
+with aadlbook::icd; 
+with sei;
+
+--------------------------------
+--  The entertainment system  --
+--------------------------------
+
+process entertainment
+features
+	music_in  : in data port aadlbook::icd::music.i;
+	contacts  : in data port aadlbook::icd::contacts.i;
+	infos     : out data port aadlbook::icd::entertainment_infos;
+	music_out : out data port aadlbook::icd::music.i;
+flows
+	f0 : flow path music_in -> music_out;
+	f1 : flow path music_in -> infos;
+	f2 : flow path contacts -> infos;
+end entertainment;
+
+
+process implementation entertainment.i
+subcomponents
+   thr : thread entertainment_thr;
+connections
+  c0 : port music_in -> thr.music_in;
+  c1 : port contacts -> thr.contacts;
+  c2 : port thr.infos -> infos;
+  c3 : port thr.music_out -> music_out;
+end entertainment.i;
+
+thread entertainment_thr
+features
+	music_in  : in data port aadlbook::icd::music.i;
+	contacts  : in data port aadlbook::icd::contacts.i;
+	infos     : out data port aadlbook::icd::entertainment_infos;
+	music_out : out data port aadlbook::icd::music.i;
+flows
+	f0 : flow path music_in -> music_out;
+	f1 : flow path music_in -> infos;
+	f2 : flow path contacts -> infos;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 5ms;
+	sei::mipsbudget   => 5.0 MIPS;
+end entertainment_thr;
+
+end aadlbook::software::entertainment;

@@ -1,0 +1,13 @@
+package emv2_errortypes_definition
+public
+
+annex EMV2 {**
+	error types
+		CameraError : type;
+		LensDirty: type extends CameraError;
+		FocusError : type extends CameraError;
+	end types;
+	
+**};
+
+end emv2_errortypes_definition;

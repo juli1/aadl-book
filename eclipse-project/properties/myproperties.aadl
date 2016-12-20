@@ -1,0 +1,47 @@
+--
+--  Model for the AADL book.
+--
+--  More details on the book on
+--  http://julien.gunnm.org/aadl-book
+--
+--
+--  Copyright © 2016 Julien Delange <julien@gunnm.org>
+--  This work is free. You can redistribute it and/or modify it under the
+--  terms of the Do What The Fuck You Want To Public License, Version 2,
+--  as published by Sam Hocevar. See the COPYING file for more details.
+--
+
+property set myproperties is
+
+
+	--
+	--  description is a property that can be applied to systems only
+	--
+	description : aadlstring => "unknown description" applies to (system);
+	
+	--
+	-- the review_type property is used to capture a review element
+	-- for a system reviewer
+	--
+	review_type : type record (
+		author      : aadlstring;
+		importance  : enumeration (major, minor); 
+		content     : aadlstring;
+	);
+	
+	--
+	--  the review will be a list of reviews for any elements.
+	--
+	reviews : list of myproperties::review_type applies to (all);
+	 
+	--
+	--  We define weight units and relation between them.
+	--
+	weight_units: type units (g, kg => g * 1000, pound => g * 453.59, ton => kg * 1000);
+	
+	--
+	--  Then, we can apply the weight property on
+	--  hardware components.
+	--
+	weight : aadlreal units myproperties::weight_units applies to (system, device, processor, memory);
+end myproperties;
