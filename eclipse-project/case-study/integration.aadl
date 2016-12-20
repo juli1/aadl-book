@@ -93,44 +93,38 @@ flows
     --
     --  We assume the camera will take more time because of acquisition/processing time.
     --
-    panel_to_warning : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
-    				c13 -> speed_ctrl.f02 -> c08 -> acceleration.f0
-    	{latency => 50 ms .. 100 ms;};
+--    panel_to_warning : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
+--    				c13 -> speed_ctrl.f02 -> c08 -> acceleration.f0;;
     	
-     panel_to_accel : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
+    panel_to_accel : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
     				c13 -> speed_ctrl.f22 -> c10 -> screen.f0
-    	{latency => 50 ms .. 100 ms;};	
+    					{latency => 40 ms .. 50 ms;};	
     
-     camera_to_screen : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0
-     
-      -> c03 -> speed_ctrl.f20 -> c10 -> screen.f0
-    	{latency => 50 ms .. 100 ms;};
-    camera_to_accel : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0
-    	{latency => 50 ms .. 100 ms;};
-    camera_to_brake : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0
-        {latency => 50 ms .. 100 ms;};
+--    camera_to_screen : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f20 -> c10 -> screen.f0;
+--    camera_to_accel : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0;
+--    camera_to_brake : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0;
         
     --
     --  The radar is faster to process and produce information to the system.
     --
-    radar_to_accel  : end to end flow obstacle_radar.f0  -> c02 -> obstacle_detection.f1 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0
-    	{latency => 20 ms .. 60 ms;};
+    --    radar_to_accel  : end to end flow obstacle_radar.f0  -> c02 -> obstacle_detection.f1 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0
+    --    	{latency => 20 ms .. 60 ms;};
     radar_to_brake  : end to end flow obstacle_radar.f0  -> c02 -> obstacle_detection.f1 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0
-    	{latency => 20 ms .. 60 ms;};
+    	{latency => 100 ms .. 300 ms;};
     
     
     --
     --  Laser and wheel provide the car speed. So, it should be quick to operate and produce data.
     --
-    laser_to_accel  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
-        {latency => 10 ms .. 40 ms;};
-    laser_to_brake  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
-        {latency => 10 ms .. 40 ms;};
-    
-    wheel_sensor_to_accel  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
-        {latency => 10 ms .. 40 ms;};
-    wheel_sensor_to_brake  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
-        {latency => 10 ms .. 40 ms;};
+--    laser_to_accel  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
+--        {latency => 10 ms .. 40 ms;};
+--    laser_to_brake  : end to end flow laser_sensor.f0 -> c05 -> speed_voter.f1 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
+--        {latency => 10 ms .. 40 ms;};
+--    
+--    wheel_sensor_to_accel  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f01 -> c08 -> acceleration.f0
+--        {latency => 10 ms .. 40 ms;};
+--    wheel_sensor_to_brake  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
+--        {latency => 10 ms .. 40 ms;};
 properties
 	security_properties::exposure => 100 applies to bluetooth_ctrl, tire_pressure;
 	security_properties::exposure => 0 applies to speaker, screen, acceleration, brake, obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor;
