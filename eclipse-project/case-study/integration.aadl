@@ -93,13 +93,13 @@ flows
     --
     --  We assume the camera will take more time because of acquisition/processing time.
     --
---    panel_to_warning : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
---    				c13 -> speed_ctrl.f02 -> c08 -> acceleration.f0;;
-    	
     panel_to_accel : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
-    				c13 -> speed_ctrl.f22 -> c10 -> screen.f0
-    					{latency => 40 ms .. 50 ms;};	
-    
+    				c13 -> speed_ctrl.f02 -> c08 -> acceleration.f0;
+    	
+--    panel_to_warning : end to end flow panel.f80 -> c11 -> panel_controller.f99 -> 
+--    				c13 -> speed_ctrl.f22 -> c10 -> screen.f0
+--    					{latency => 40 ms .. 50 ms;};	
+--    
 --    camera_to_screen : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f20 -> c10 -> screen.f0;
 --    camera_to_accel : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f00 -> c08 -> acceleration.f0;
 --    camera_to_brake : end to end flow obstacle_camera.f0 -> c00 -> image_acquisition.f0 -> c01 -> obstacle_detection.f0 -> c03 -> speed_ctrl.f10 -> c09 -> brake.f0;
@@ -147,9 +147,9 @@ end integration.functional;
 --  For variation1, we are using
 --    * one processor for the critical/driving part
 --    * one processor for the entertainment part
---    * one bus for the connections of the entertainment part
---    * one bus for the connections of the driving part
---    * one bus for each cross-domain connections
+--    * one bus for the connections of the entertainment part (CAN2)
+--    * one bus for the connections of the driving part (CAN1)
+--    * one bus for each cross-domain connections (CAN3)
 --
 
 system implementation integration.variation1 extends integration.functional
@@ -170,7 +170,7 @@ properties
 	actual_processor_binding => (reference (cpu2)) applies to 
 			panel_controller, entertainment;
 	actual_connection_binding => (reference (can1)) applies to
-		c00,c02,c04,c05,c08,c09;
+		c00,c02,c04,c05,c08,c09,c11,c12;
 	actual_connection_binding => (reference (can2)) applies to
         c15,c18,c19,c20,c21;
 	actual_connection_binding => (reference (can3)) applies to
