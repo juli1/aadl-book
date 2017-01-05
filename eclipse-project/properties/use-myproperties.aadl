@@ -33,7 +33,7 @@ public
 			 content => "Needs to describe the behavior";
 			]
 		);
-	    myproperties::weight => 1.0 pound;
+	    
 	end motor;
 	
 	
@@ -42,12 +42,22 @@ public
 		myproperties::description => "this is my system";
 	end integration;
 	
-	system implementation integration.i
+	system implementation integration.with_units
 	subcomponents
 		m : device motor;
 		s : device sensor;
 	properties
 		myproperties::weight => 100.0 g applies to s;
-	end integration.i;
+		myproperties::weight => 1.0 pound applies to m;
+	end integration.with_units;
+	
+	system implementation integration.without_units
+	subcomponents
+		m : device motor;
+		s : device sensor;
+	properties
+		myproperties::badweight => 100.0 applies to s;
+		myproperties::badweight => 1.0 applies to m;
+	end integration.without_units;
 	
 end use_myproperties;

@@ -44,4 +44,6 @@ property set myproperties is
 	--  hardware components.
 	--
 	weight : aadlreal units myproperties::weight_units applies to (system, device, processor, memory);
+	badweight : aadlreal applies to (system, device, processor, memory);
+
 end myproperties;
