@@ -1,3 +1,19 @@
+/**
+ *            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ *                    Version 2, December 2004
+ *
+ * Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+ *
+ * Everyone is permitted to copy and distribute verbatim or modified
+ * copies of this license document, and changing it is allowed as long
+ * as the name is changed.
+ *
+ *            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ *   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+ *
+ *  0. You just DO WHAT THE FUCK YOU WANT TO.
+ */
+
 package org.gunnm.aadl.commentreporting.handlers;
 
 import java.io.ByteArrayInputStream;
@@ -43,12 +59,14 @@ import org.osate.xtext.aadl2.properties.util.GetProperties;
  * @see org.eclipse.core.commands.AbstractHandler
  */
 class Comment {
+	String name;
 	String author;
 	String content;
 	String importance;
 
-	public Comment (String a, String c, String i)
+	public Comment (String n, String a, String c, String i)
 	{
+		name = n;
 		author = a;
 		content = c;
 		importance = i;
@@ -120,7 +138,7 @@ public class SampleHandler extends AbstractHandler {
 			pa = GetProperties.getRecordField(fields, "importance");
 			EnumerationLiteral elImportance = (EnumerationLiteral) ((NamedValue)pa.getValue()).getNamedValue();
 			String importance = elImportance.getName();
-			result.add(new Comment (author, content, importance));
+			result.add(new Comment (ph.getName(), author, content, importance));
 		}
 		return result;
 	}
@@ -155,13 +173,15 @@ public class SampleHandler extends AbstractHandler {
 						return null;
 					}
 				}
-				output.append ("Author,Content,Importance\n");
+				output.append ("Component,Author,Content,Importance\n");
 				for (ComponentInstance ci : rootInstance.getAllComponentInstances())
 				{
 
 					List<Comment> comments = getComments(ci);
 					for (Comment comment : comments)
 					{
+						output.append (comment.name);
+						output.append (",");
 						output.append (comment.author);
 						output.append (",");
 						output.append (comment.content);
