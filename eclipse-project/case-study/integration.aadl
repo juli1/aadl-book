@@ -15,9 +15,6 @@ package aadlbook::integration
 
 public
 
-with security_properties;
-
-
 with aadlbook::devices;
 with aadlbook::software::image_acquisition;
 with aadlbook::software::obstacle_detection;
