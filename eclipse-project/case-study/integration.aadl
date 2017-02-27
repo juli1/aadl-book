@@ -122,12 +122,6 @@ flows
 --        {latency => 10 ms .. 40 ms;};
 --    wheel_sensor_to_brake  : end to end flow wheel_sensor.f0 -> c04 -> speed_voter.f0 -> c06 -> speed_ctrl.f11 -> c09 -> brake.f0
 --        {latency => 10 ms .. 40 ms;};
-properties
-	security_properties::exposure => 100 applies to bluetooth_ctrl, tire_pressure;
-	security_properties::exposure => 0 applies to speaker, screen, acceleration, brake, obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor;
-	security_properties::domains => ("entertainment") applies to entertainment, speaker, screen;
-	security_properties::domains => ("control_notcritical") applies to tire_pressure, panel, panel_controller;
-	security_properties::domains => ("control_critical") applies to obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor, speed_ctrl, speed_voter,brake, acceleration;
 annex EMV2 {**
 	use types 		ErrorLibrary;
 	use behavior  	ErrorLibrary::FailStop;
