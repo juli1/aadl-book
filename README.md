@@ -2,7 +2,9 @@ AADL book - examples
 ====================
 
 These are the examples for the AADL book.
-To learn more about the book, please visit 
-http://julien.gunnm.org/aadl-book
+
+Buy the book online: https://www.amazon.com/dp/B071WHRJY3
+
+Official book website: http://aadl-book.com/
 
 
